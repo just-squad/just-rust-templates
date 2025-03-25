@@ -5,7 +5,6 @@ use std::{path::Path, sync::Arc};
 
 mod app;
 mod api;
-mod shared;
 
 #[tokio::main]
 async fn main() -> Result<()> {
