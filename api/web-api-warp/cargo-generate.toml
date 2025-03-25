@@ -3,8 +3,9 @@ cargo_generate_version = ">=0.23.0"
 
 [hooks]
 pre = [
-    "ask-license.rhai"
+    "script-task-license.rhai"
 ]
+post = ["script-post.rhai"]
 
 [placeholders]
 description = { type = "string", prompt = "Description for this service?" }
