@@ -1,6 +1,5 @@
 use anyhow::{Context, Result};
 use app::Application;
-use bot::TgBotProvider;
 use std::{path::Path, sync::Arc};
 
 mod app;
