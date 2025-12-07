@@ -15,7 +15,7 @@ use teloxide::{
 
 mod commands;
 mod commands_handlers;
-pub mod configurations;
+pub mod cfg;
 mod dialogue;
 mod message_processor;
 
