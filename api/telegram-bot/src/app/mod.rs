@@ -1,12 +1,10 @@
-use envconfig::Envconfig;
+use serde::Deserialize;
 
-use crate::{api::configurations::ApiConfiguration, bot::configurations::BotConfig};
+use crate::{api::cfg::ApiConfiguration, bot::cfg::BotCfg};
 
-#[derive(Envconfig, Debug, Clone)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct Config {
-    #[envconfig(nested)]
-    pub bot_conf: BotConfig,
-    #[envconfig(nested)]
+    pub bot_conf: BotCfg,
     pub api_configuration: ApiConfiguration,
 }
 
@@ -16,9 +14,7 @@ pub struct Application {
 }
 
 impl Application {
-    pub fn new() -> Self {
-        let config = Config::init_from_env().expect("Can't load config from environment");
-
+    pub fn new(config: Config) -> Self {
         Self { config }
     }
 }

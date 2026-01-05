@@ -1,13 +1,13 @@
+// public modules
+pub mod cfg;
+pub mod error;
+
 // private modules
-pub(crate) mod common;
 mod system;
 
-// public modules
-pub mod configurations;
+use axum::Router;
 
-use configurations::ApiConfiguration;
-use system::use_system_api;
-use warp::{filters::cors::Builder, http::Method, Filter};
+use cfg::ApiConfiguration;
 
 pub struct ApiProvider {
     api_configuration: ApiConfiguration,
@@ -19,27 +19,36 @@ impl ApiProvider {
             api_configuration: api_cfg.clone(),
         }
     }
-}
 
-impl ApiProvider {
-    pub async fn start_server(&self) {
-        
-        let api = use_system_api();
+    pub async fn start_server(&self) -> anyhow::Result<()> {
+        // let my_router = my_controller::create_router();
+        let debug_router = system::create_debug_router();
 
-        let routes = api.with(self.add_cors()).with(warp::log("api"));
+        // Main application router
+        let app_router = Router::new()
+            // .nest("/api/my_api", my_router)
+            ;
 
-        log::info!("🚀 Server started successfully");
-        warp::serve(routes)
-            .run(([0, 0, 0, 0], self.api_configuration.http_port))
-            .await;
-    }
-}
+        let app_listener = tokio::net::TcpListener::bind(format!(
+            "0.0.0.0:{}",
+            self.api_configuration.http_port
+        ))
+        .await?;
+        tracing::info!("🚀 Main server listening on {}", app_listener.local_addr()?);
+        let app_server = axum::serve(app_listener, app_router);
 
-impl ApiProvider {
-    fn add_cors(&self) -> Builder {
-        warp::cors()
-            .allow_methods(&[Method::GET, Method::POST])
-            .allow_headers(vec!["content-type"])
-            .allow_credentials(true)
+        // Debug and system router
+        let debug_listener = tokio::net::TcpListener::bind(format!(
+            "0.g.0.0:{}",
+            self.api_configuration.debug_port
+        ))
+        .await?;
+        tracing::info!("🩺 Debug server listening on {}", debug_listener.local_addr()?);
+        let debug_server = axum::serve(debug_listener, debug_router);
+
+        // Run both servers concurrently
+        tokio::try_join!(app_server, debug_server)?;
+
+        Ok(())
     }
 }

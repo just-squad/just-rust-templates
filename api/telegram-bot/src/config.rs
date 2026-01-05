@@ -1,24 +1,31 @@
-use std::path::Path;
+use anyhow::{Context, Result};
+use config::{Config as ConfigLoader, Environment, File};
 
-use anyhow::Context;
-use config::{Config, Environment};
+use crate::app::Config;
 
-pub fn add_configuration() -> anyhow::Result<Config> {
-    load_env_file()?;
+pub const RUST_APP_ENVIRONMENT_VAR_NAME: &str = "RUST_APP_ENVIRONMENT";
 
-    Config::builder()
-        .add_source(Environment::with_prefix(""))
-        .add_source(config::Environment::with_prefix("RUST"))
-        .add_source(config::Environment::with_prefix("APPENV").separator("__"))
-        .build()
-        .with_context("Error occured while load configurations:")?
-}
+pub fn get_configuration() -> Result<Config> {
+    let rust_app_env = std::env::var(RUST_APP_ENVIRONMENT_VAR_NAME)?;
 
-fn load_env_file() -> anyhow::Result<()> {
-    let local_env_path = Path::new(".env.local");
-    if local_env_path.exists() {
-        dotenvy::from_path(local_env_path)?
-    } else {
-        dotenvy::dotenv().with_context("Error occured while load configurations:")?
+    let mut builder = ConfigLoader::builder()
+        // Add default config file, e.g., `config.json` or config.ENV.json
+        .add_source(File::with_name("config.json").required(false));
+    if !rust_app_env.is_empty() {
+        builder = builder
+            .add_source(File::with_name(&format!("config.{}.json", rust_app_env)).required(false));
     }
+    // Add environment variables with a prefix, e.g., `APP_BOT_CONF__BOT_TOKEN=...`
+    builder = builder.add_source(Environment::with_prefix("APP").separator("__"));
+
+    let config_loader = builder
+        .build()
+        .context("Failed to build configuration loader")?;
+
+    // Deserialize the configuration into the main `Config` struct
+    let config: Config = config_loader
+        .try_deserialize()
+        .context("Failed to deserialize configuration")?;
+
+    Ok(config)
 }

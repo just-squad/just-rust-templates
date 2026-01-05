@@ -1,48 +1,97 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
-      {
-        "type": "lldb",
-        "request": "launch",
-        "name": "Debug backend",
-        "cargo": {
-          "args": [
-            "build",
-            "--bin={{project-name}}",
-            "--package={{project-name}}"
-          ],
-          "filter": {
-            "name": "{{project-name}}",
-            "kind": "bin"
-          },
-          "cwd": "${workspaceFolder}"
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug Development",
+      "cargo": {
+        "args": [
+          "build",
+          "--bin={{project-name}}",
+          "--package={{project-name}}"
+        ],
+        "filter": {
+          "name": "{{project-name}}",
+          "kind": "bin"
         },
-        "args": [],
         "cwd": "${workspaceFolder}"
       },
-      {
-        "type": "lldb",
-        "request": "launch",
-        "name": "Debug unit tests in executable '{{project-name}}'",
-        "cargo": {
-          "args": [
-            "test",
-            "--no-run",
-            "--bin={{project-name}}",
-            "--package={{project-name}}"
-          ],
-          "filter": {
-            "name": "{{project-name}}",
-            "kind": "bin"
-          },
-          "cwd": "${workspaceFolder}"
-        },
-        "args": [],
-        "cwd": "${workspaceFolder}"
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "RUST_APP_ENVIRONMENT": "Development",
+        "RUST_LOG": "info"
       }
-    ]
-  }
-  
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug Staging",
+      "cargo": {
+        "args": [
+          "build",
+          "--bin={{project-name}}",
+          "--package={{project-name}}"
+        ],
+        "filter": {
+          "name": "{{project-name}}",
+          "kind": "bin"
+        },
+        "cwd": "${workspaceFolder}"
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "RUST_APP_ENVIRONMENT": "Staging",
+        "RUST_LOG": "info"
+      }
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug Production",
+      "cargo": {
+        "args": [
+          "build",
+          "--bin={{project-name}}",
+          "--package={{project-name}}"
+        ],
+        "filter": {
+          "name": "{{project-name}}",
+          "kind": "bin"
+        },
+        "cwd": "${workspaceFolder}"
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "RUST_APP_ENVIRONMENT": "Production",
+        "RUST_LOG": "info"
+      }
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in executable '{{project-name}}'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--bin={{project-name}}",
+          "--package={{project-name}}"
+        ],
+        "filter": {
+          "name": "{{project-name}}",
+          "kind": "bin"
+        },
+        "cwd": "${workspaceFolder}"
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}
