@@ -1,28 +1,37 @@
-use std::{error::Error, sync::OnceLock};
+use std::{error::Error, sync::Arc};
 
+// public modules
+pub mod cfg;
+pub mod commands;
+pub mod handlers;
+pub mod message_processor;
+
+// private modules
+mod dialogue;
 use commands::MainCommands;
-use commands_handlers::main_commands_menu_handler;
-use configurations::BotConfig;
 use dialogue::State;
+use message_processor::MessageProcessor;
 use teloxide::{
     Bot as TBot,
     adaptors::DefaultParseMode,
-    dispatching::{UpdateFilterExt, UpdateHandler, dialogue::InMemStorage},
+    dispatching::{
+        UpdateFilterExt, UpdateHandler,
+        dialogue::{GetChatId, InMemStorage},
+    },
     dptree::{self, case},
-    prelude::{Dialogue, Dispatcher, LoggingErrorHandler, RequesterExt},
-    types::{ParseMode, Update},
+    prelude::{Dispatcher, LoggingErrorHandler, RequesterExt},
+    types::{Message, ParseMode, Update},
+};
+use tracing::warn;
+
+use crate::{
+    bot::{cfg::BotCfg, handlers::user_handlers::GetMainMenuCommand},
+    shared::CommandHandler,
 };
 
-mod commands;
-mod commands_handlers;
-pub mod cfg;
-mod dialogue;
-mod message_processor;
+type HandlerResult = Result<(), Box<dyn Error + Send + Sync>>;
 
 pub type Bot = DefaultParseMode<TBot>;
-type BotDialogue = Dialogue<State, InMemStorage<State>>;
-
-pub static INSTANCE: OnceLock<TgBotProvider> = OnceLock::new();
 
 #[derive(Debug, Clone)]
 pub struct TgBotProvider {
@@ -30,26 +39,30 @@ pub struct TgBotProvider {
 }
 
 impl TgBotProvider {
-    pub fn new(config: &BotConfig) -> Self {
+    pub fn new(config: &BotCfg) -> Self {
         TgBotProvider {
             bot: TBot::new(&config.bot_token).parse_mode(ParseMode::MarkdownV2),
         }
     }
-
-    pub fn global() -> &'static TgBotProvider {
-        INSTANCE
-            .get()
-            .expect("Can't get TgBotProvider from global instance")
-    }
 }
 
 impl TgBotProvider {
-    pub async fn start_receive_messages(&self) {
+    pub async fn start_receive_messages(
+        &self,
+        message_processor: Arc<MessageProcessor /*<TRepo1, TRepo2>*/>,
+    )
+    /*where
+    TRepo1: Repo1 + Send + Sync + 'static,
+    TRepo2: Repo2 + Send + Sync + 'static,*/
+    {
         let bot_instance = self.bot.clone();
-        Dispatcher::builder(bot_instance, self.schema())
-            .dependencies(dptree::deps![InMemStorage::<State>::new()])
+        Dispatcher::builder(bot_instance, self.schema/*::<TRepo1, TRepo2>*/())
+            .dependencies(dptree::deps![
+                InMemStorage::<State>::new(),
+                message_processor
+            ])
             .default_handler(|upd| async move {
-                log::warn!("Unhandled update: {:?}", upd);
+                warn!("Unhandled update: {:?}", upd);
             })
             .error_handler(LoggingErrorHandler::with_custom_text(
                 "An error has occurred in the dispatcher",
@@ -60,7 +73,10 @@ impl TgBotProvider {
             .await;
     }
 
-    fn schema(&self) -> UpdateHandler<Box<dyn Error + Send + Sync + 'static>> {
+    fn schema(&self) -> UpdateHandler<Box<dyn Error + Send + Sync + 'static>>
+/*where
+        TRepo1: Repo1 + Send + Sync + 'static,
+        TRepo2: Repo2 + Send + Sync + 'static,*/ {
         let main_commands_handler = teloxide::filter_command::<MainCommands, _>()
             .branch(case![MainCommands::Menu].endpoint(main_commands_menu_handler));
 
@@ -69,4 +85,31 @@ impl TgBotProvider {
         teloxide::dispatching::dialogue::enter::<Update, InMemStorage<State>, State, _>()
             .branch(message_handler)
     }
+}
+
+async fn main_commands_menu_handler(
+    msg: Message,
+    processor: Arc<MessageProcessor /*<TRepo1, TRepo2>*/>,
+) -> HandlerResult
+/*where
+        TRepo1: Repo1 + Send + Sync + 'static,
+        TRepo2: Repo2 + Send + Sync + 'static,*/
+{
+    let user_id = msg
+        .from
+        .clone()
+        .expect("Can't get user info from telegram message")
+        .id;
+    let chat_id = msg
+        .chat_id()
+        .expect("Can't get chat id from telegram message");
+    processor
+        .handle(GetMainMenuCommand {
+            user_id,
+            chat_id,
+            message_id: msg.id,
+            edit_message: false,
+        })
+        .await?;
+    Ok(())
 }

@@ -1,0 +1,16 @@
+{
+  "api_configuration": {
+    "http_port": 5100,
+    "debug_port": 5104
+  },
+  "bot_conf": {
+    "bot_token": "<bot_token>"
+  },
+  "db_configuration": {
+    "mongo_database_name": "",
+    "mongo_username": "",
+    "mongo_password": "",
+    "mongo_host": "",
+    "mongo_port": ""
+  }
+}

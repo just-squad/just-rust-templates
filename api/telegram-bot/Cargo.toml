@@ -15,31 +15,38 @@ teloxide = { version = "0.17.0", features = ["macros", "webhooks-axum"] }
 # errors handling
 anyhow = { version = "1.0" }
 
-# logging
-log = { version = "0.4.29" }
-env_logger = { version = "0.11.8" }
+# logging & tracing
+tracing = { version = "0.1.44" }
+tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }
 
 # async and web servers
 tokio = { version = "1.49", features = ["rt-multi-thread", "macros"] }
-tokio-stream = { version = "0.1.17", features = ["full"] }
-axum = { version = "0.8.8", optional = true }
+tokio-stream = { version = "0.1.18", features = ["full"] }
+axum = { version = "0.8.8", features = ["macros", "json"] }
 async-trait = { version = "0.1" }
 url = { version = "2.5" }
 
 # configurations
 config = { version = "0.15", features = ["json"] }
-dotenvy = { version = "0.15" }
 
 # serialization
 serde = { version = "1.0" }
 serde_json = { version = "1.0" }
+strum = { version = "0.27", features = ["derive"] }
 
 # types
-uuid = { version = "1.19" }
+uuid = { version = "1.19", features = ["v7", "std"] }
+chrono = { version = "0.4.42" }
 
 # swagger
 utoipa = { version = "5.4", features = ["uuid"] }
-utoipa-swagger-ui = { version = "9.0" }
+utoipa-swagger-ui = { version = "9.0.1", features = ["axum"] }
+
+# database connection
+mongodb = { version = "3.4.1" }
+
+# caching
+moka = { version = "0.12", features = ["future"] }
 
 # Use vendored openssl. We don't depend on it directly.
-openssl = { version = "0.10", features = ["vendored"], optional = true }
+openssl = { version = "0.10.75", features = ["vendored"], optional = true }

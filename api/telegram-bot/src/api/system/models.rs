@@ -5,11 +5,16 @@ use utoipa::{
 
 #[derive(OpenApi)]
 #[openapi(
-        nest(
-            (path = "/", api = crate::api::system::SystemApi)
-        ),
-        modifiers(&SecurityAddon)
-    )]
+    paths(
+        
+    ),
+    components(
+        schemas(
+            
+        )
+    ),
+    modifiers(&SecurityAddon)
+)]
 pub struct ApiDoc;
 
 struct SecurityAddon;

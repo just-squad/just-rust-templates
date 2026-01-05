@@ -1,7 +1,10 @@
 {
     "cSpell.words": [
+        "apikey",
         "APPENV",
         "dotenv",
-        "dotenvy"
+        "dotenvy",
+        "teloxide",
+        "utoipa"
     ]
 }

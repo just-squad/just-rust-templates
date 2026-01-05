@@ -1,41 +1,54 @@
 use anyhow::{Context, Result};
-use app::Application;
-use bot::TgBotProvider;
-use std::{path::Path, sync::Arc};
+use std::sync::Arc;
+use tracing::info;
+use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
+use app::Application;
+use bot::{message_processor::MessageProcessor, TgBotProvider};
+
+mod api;
 mod app;
 mod bot;
-mod api;
 mod shared;
+mod config;
 
 #[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    // configure app config
-    config::add_configuration()?;
+async fn main() -> Result<()> {
     // configure logger
-    env_logger::init();
+    let filter = EnvFilter::try_from_default_env()
+        .unwrap_or_else(|_| EnvFilter::new("info,tower=off"));
+    let subscriber = FmtSubscriber::builder()
+        .with_env_filter(filter)
+        .finish();
+    tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
 
-    log::info!("Load application settings...");
-    let app = Arc::new(Application::new());
+    info!("Load application settings...");
+    let config = config::get_configuration().context("Failed to load configuration")?;
+    let app = Arc::new(Application::new(config));
 
-    log::info!("Starting bot...");
+    info!("Starting bot...");
     let bot_provider = TgBotProvider::new(&app.config.bot_conf);
-    bot::INSTANCE
-        .set(bot_provider.clone())
-        .expect("Can't set static bot provider");
 
-    tokio::spawn(start_bot());
-    log::info!("Bot started...");
+    let message_processor = Arc::new(MessageProcessor::new(
+        bot_provider.clone(),
+        /* repos here */
+    ));
 
-    log::info!("Start Api Server...");
+    tokio::spawn(start_bot(bot_provider, message_processor));
+    info!("Bot started...");
+
+    info!("Start Api Server...");
     let api_provider = api::ApiProvider::new(&app.config.api_configuration);
-    api_provider.start_server().await;
+    api_provider.start_server().await?;
     Ok(())
 }
 
-async fn start_bot() {
-    let bot_provider = bot::INSTANCE
-        .get()
-        .expect("Can't get instance of bot provider. Set instance before get");
-    bot_provider.start_receive_messages().await;
+async fn start_bot/*<TRepo1, TRepo2>*/(bot_provider: TgBotProvider, message_processor: Arc<MessageProcessor/*<TRepo1, TRepo2> */>)
+/*where
+    TRepo1: Repo1 + Send + Sync + 'static,
+    TRepo2: Repo2 + Send + Sync + 'static,*/
+{
+    bot_provider
+        .start_receive_messages(message_processor)
+        .await;
 }
