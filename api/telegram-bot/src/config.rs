@@ -11,7 +11,7 @@ pub fn add_configuration() -> anyhow::Result<Config> {
         .add_source(config::Environment::with_prefix("RUST"))
         .add_source(config::Environment::with_prefix("APPENV").separator("__"))
         .build()
-        .with_context("Error occured while load configurations:")?
+        .with_context("Error occurred while load configurations:")?
 }
 
 fn load_env_file() -> anyhow::Result<()> {
@@ -19,6 +19,6 @@ fn load_env_file() -> anyhow::Result<()> {
     if local_env_path.exists() {
         dotenvy::from_path(local_env_path)?
     } else {
-        dotenvy::dotenv().with_context("Error occured while load configurations:")?
+        dotenvy::dotenv().with_context("Error occurred while load configurations:")?
     }
 }

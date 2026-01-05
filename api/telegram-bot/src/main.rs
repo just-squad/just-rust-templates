@@ -17,7 +17,6 @@ async fn main() -> anyhow::Result<()> {
 
     log::info!("Load application settings...");
     let app = Arc::new(Application::new());
-    log::info!("tg token {}", app.config.bot_conf.bot_token);
 
     log::info!("Starting bot...");
     let bot_provider = TgBotProvider::new(&app.config.bot_conf);
